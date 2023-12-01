@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="www.dream.bbs.movie.mapper.MovieMapper">
+	<resultMap id="rmMovieVO" type="www.dream.bbs.movie.model.TmdbMovieResultVO">
+		<result property="backdropPath" column="backdrop_path" />
+		<result property="id" column="id" />
+		<result property="genreNames" column="genre_names" />
+		<result property="olLang" column="original_language" />
+		<result property="olTitle" column="original_title" />
+		<result property="overview" column="overview" />
+		<result property="popularity" column="popularity" />
+		<result property="postPath" column="post_path" />
+		<result property="title" column="title" />
+		<result property="voteAverage" column="vote_average" />
+		<result property="voteCount" column="vote_count" />
+		<result property="certification" column="certification" />
+		<result property="releaseDate" column="release_date" />
+	</resultMap>
+	
+	<!-- extends - 확장하기(=상속) -->
+	<resultMap id="rmMDetailVO" extends="rmMovieVO"
+		type="www.dream.bbs.movie.model.TmdbMovieDetailVO">
+		<result property="budget" column="budget" />
+		<result property="imdbId" column="imdb_id" />
+		<result property="revenue" column="revenue" />
+		<result property="runtime" column="runtime" />
+		<result property="status" column="status" />
+		<result property="tagline" column="tagline" />
+	</resultMap>
+	
+<!-- Integer ID를 String으로 변경해주는 것. -->
+	<select id="changeId" resultType="String">
+		select id
+		  from t_id_seed
+	 	 where num = #{id}
+	</select>
+
+	<select id="findExistings" resultType="Integer">
+	 	 SELECT id
+	 	   FROM t_tmdb_movie
+	 	  WHERE id IN
+      <foreach collection="listIdIntegers" index="index" item="id" open="(" separator="," close=")">
+        #{id}
+      </foreach> 	  
+	</select>
+
+	<!-- public List<MovieDTO> listGenreMovie(String genre); -->
+	<select id="listGenreMovie" resultMap="rmMDetailVO">
+		select id, genre_names, title, popularity, release_date, overview,
+		vote_average, vote_count
+		from T_tmdb_movie
+		WHERE genre_names Like CONCAT('%', #{genre}, '%')
+		ORDER BY vote_count DESC
+		LIMIT 100
+	</select>
+
+	<!-- 영화 장르별 리스트 데이터 저장 -->
+	<insert id="saveMovie">
+		INSERT INTO t_tmdb_movie (backdrop_path, genre_names, id, imdb_id,
+		original_language, original_title, runtime, revenue, status, tagline,
+		 overview, popularity, poster_path, title, vote_average, vote_count,
+		 budget, certification, release_date)
+		VALUES
+		<foreach collection="movieLists" index="index" item="movie" separator=",">
+			(
+			#{movie.backdropPath},
+			#{movie.genreNames},
+			#{movie.id},
+			#{movie.details.imdbId},		
+			#{movie.olLang},
+			#{movie.olTitle},
+			#{movie.details.runtime},
+			#{movie.details.revenue},
+			#{movie.details.status},
+			#{movie.details.tagline},
+			#{movie.overview},
+			#{movie.popularity},
+			#{movie.postPath},
+			#{movie.title},
+			#{movie.voteAverage},
+			#{movie.voteCount},
+			#{movie.details.budget},
+			#{movie.releases.certification},
+			#{movie.releases.releaseDate}
+			 )
+		</foreach>
+	</insert>
+
+
+
+	<!-- public Tmdb_MovieVO findById(String id); 영화상세정보 검색하는기능. -->
+	<select id="findById" resultMap="rmMDetailVO">
+		select genre_names, id, status, overview, popularity,
+		title, vote_average, vote_count, budget, certification, release_date
+		  from T_tmdb_movie
+		 where id = #{id}
+	</select>
+
+	<!-- public List<MovieDTO> searchBymovieId(@Param("movieId") String movieId, 
+		@Param("arrSearch") String[] arrSearch, @Param("paging") PagingDTO paging); -->
+	<select id="searchBymovieId" resultMap="rmMDetailVO">
+		select m.*
+		from T_tmdb_movie m
+		WHERE
+		<foreach item="title" collection="arrSearch" open="("
+			separator=", " close=")">
+			m.title like concat('%', #{title}, '%')
+		</foreach>
+		order by m.title title;
+	</select>
+	
+	<!-- public int addGenre(MovieGenreDTO movieGenreDTO); -->
+	<update id="addGenre">
+      <foreach collection="listE" index="index" item="result" separator=";">
+		update T_tmdb_movie
+		set genre_names = CONCAT(genre_names, ', ', #{result.genreNames})
+		where id = #{result.id}
+		and genre_names not like CONCAT('%', #{result.genreNames}, '%')
+      </foreach>
+	</update>
+</mapper>

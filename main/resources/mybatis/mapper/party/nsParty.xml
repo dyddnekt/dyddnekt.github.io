@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="www.dream.bbs.party.mapper.PartyMapper">
+	<resultMap id="rmPartyVO" extends="nsEntity.rmMasterEntity"
+		type="www.dream.bbs.party.model.PartyVO">
+		<result property="name" column="name" />
+		<result property="image" column="image" />
+		<!-- 1:N query. 성능 향상 -->
+		<collection property="listContactPoint" columnPrefix="cp_"
+			resultMap="rmContactPointVO">
+		</collection>
+		
+		<!--  인가(Authorization) 처리를 위한 것임. -->
+		<collection property="listAccountability" columnPrefix="role_"
+			resultMap="rmAccountabilityVO">
+		</collection>
+
+		<discriminator javaType="String" column="descrim">
+			<case value="user" resultMap="rmUser4PartyVO" />
+			<case value="credit" resultMap="rmCredit4PartyVO" />
+			<case value="company" resultMap="rmPartyVO" />
+		</discriminator>
+	</resultMap>
+
+	<resultMap id="rmOrganizationVO" extends="rmPartyVO"
+		type="www.dream.bbs.party.model.OrganizationVO" />
+
+	<resultMap id="rmContactPointVO"
+		type="www.dream.bbs.party.model.ContactPointVO">
+		<id property="cpType" column="cp_type" />
+		<result property="cpVal" column="cp_val" />
+	</resultMap>
+
+	<resultMap id="rmAccountabilityVO" extends="nsEntity.rmMasterEntity"
+		type="www.dream.bbs.party.model.AccountabilityVO">
+		<result property="accountType" column="account_type" />
+		<result property="ownerId" column="owner_id" />
+		<result property="responseId" column="response_id" />
+		<result property="alive" column="alive" />
+	</resultMap>
+
+	<resultMap id="rmPerson4PartyVO" extends="rmPartyVO"
+		type="www.dream.bbs.party.model.Person4PartyVO" >
+		<result property="gender" column="gender" />
+		<result property="department" column="department" />
+	</resultMap>
+
+	<resultMap id="rmUser4PartyVO" extends="rmPerson4PartyVO"
+		type="www.dream.bbs.party.model.User4PartyVO" >
+		<result property="nick" column="nick" />
+		<result property="pwd" column="pwd" />
+		<result property="birth" column="birth" />
+		<result property="membership" column="membership" />
+		<result property="penalty" column="penalty" />
+	</resultMap>
+
+	<resultMap id="rmReportVO" type="www.dream.bbs.party.model.ReportVO">
+		<result property="movieId" column="movie_id" />
+		<result property="reporterId" column="reporter_id" />
+		<result property="writerId" column="writer_id" />
+		<result property="content" column="content" />
+		<result property="checked" column="checked" />
+		<result property="cnt" column="cnt" />
+	</resultMap>
+
+	<resultMap id="rmRecentMovieVO" type="www.dream.bbs.party.model.RecentMovieVO">
+		<result property="userId" column="user_id" />
+		<result property="movieId" column="movie_id" />
+		<result property="movieTitle" column="movie_title" />
+		<result property="movieRuntime" column="movie_runtime" />
+		<result property="viewTime" column="view_time" />
+		<result property="regDt" column="reg_dt" />
+		<result property="uptDt" column="upt_dt" />
+	</resultMap>
+	
+	<resultMap id="rmTmdbCastsVO" type="www.dream.bbs.party.model.TmdbCastsVO">
+		<result property="id" column="id" />
+		<result property="gender" column="gender" />
+		<result property="department" column="department" />
+		<result property="name" column="name" />
+		<result property="profilePath" column="image" />
+		<result property="character" column="character" />
+	</resultMap>
+	
+	<resultMap id="rmTmdbCompanyVO" type="www.dream.bbs.party.model.TmdbCompanyVO">
+		<result property="id" column="id" />
+		<result property="logo_path" column="image" />
+		<result property="name" column="name" />
+		<result property="country" column="origin_country" />
+	</resultMap>
+
+	<!-- public List<User4PartyVO> listAllMember(); -->
+	<select id="listAllMember" resultMap="rmUser4PartyVO">
+		select *
+		  from T_party
+		 where descrim = 'user';
+	</select>
+
+<!--     .............................  여기서부터    .................................      -->
+	<!-- public List<ReportVO> listReported(); -->
+	<select id="listReported" resultMap="rmReportVO">
+		select r.movie_id, r.writer_id, r.content, count(*) cnt
+		  from T_report r 
+		 where r.checked = False
+	  group by movie_id;
+	</select>
+
+	<!-- public List<RecentMovieVO> listAllRecentMovies(String id); -->
+	<select id="listAllRecentMovies" resultMap="rmRecentMovieVO">
+		select r.*
+		  from t_recent_movie r
+		 where r.user_id = #{id}
+		 order BY (SELECT IF (r.upt_dt IS null, r.reg_dt, r.upt_dt)) DESC;
+	</select>
+
+	<!-- public List<String> listRecentMoviesGenre(String userId); -->
+	<select id="listRecentMoviesGenre" parameterType="map" resultType="java.lang.String">
+        SELECT p.genre
+          from t_reply p, (
+         			select r.movie_id
+         			  from t_recent_movie r
+         			 where r.user_id = #{id}
+         			) as i
+         where p.id = i.movie_id;
+    </select>
+<!--   ............................     여기까지 미완성     .............................      -->
+
+	<!-- public User4PartyVO findByNick(String nick); -->
+	<select id="findByNick" resultMap="rmUser4PartyVO">
+		SELECT p.*, role.id role_id, role.account_type role_account_type,
+			   role.owner_id role_owner_id, role.alive role_alive,
+			   role.reg_dt role_reg_dt, role.upt_dt role_upt_dt,
+			   cp.cp_type cp_cp_type, cp.cp_val cp_cp_val
+		  FROM T_party p 
+		  JOIN T_Accountability role ON p.id = role.response_id
+			   LEFT OUTER JOIN T_contact_point cp
+		    ON p.id = cp.owner_id
+		 WHERE p.nick = #{nick}
+		   and p.descrim = 'user'
+		   and role.alive = true;
+	</select>
+
+	<!-- public boolean isValidNick(String nick); -->
+	<select id="isValidNick" resultType="boolean">
+		SELECT count(1) = 0 
+		  FROM T_party p 
+		 WHERE p.nick = binary(#{nick})
+		   and p.descrim = 'user';
+	</select>
+
+<!-- int로 받은 id값을 string으로 전환
+		<selectKey keyProperty="stringId" resultType="String">
+			select id
+			  from t_id_seed
+			 where num = #{id}
+		</selectKey>
+-->
+
+	<!-- findRecentMovie(RecentMovieVO watching) -->
+	<select id="findRecentMovie" resultType="boolean">
+		SELECT count(1) = 0
+		  FROM T_recent_movie p 
+		 WHERE p.movie_id = #{movieId}
+		   and p.user_id = #{userId};
+	</select>
+
+	<!-- public int createRecentMovie(RecentMovieVO watching); -->
+	<insert id="createRecentMovie">
+		INSERT INTO T_recent_movie (user_id, movie_id, movie_title, movie_runtime, view_time)
+		VALUES (#{userId}, #{movieId}, #{movieTitle}, 3600000, #{viewTime}); <!-- 현재 영상 길이를 받는 기능이 없어 임시로 1시간으로 설정 -->
+	</insert>
+	
+<!-- 여기서부터는 Party에 포함되는 영화 제작자 및 제작사 정보. -->
+	<!-- Integer ID를 String으로 변경해주는 것. -->
+	<select id="changeId" resultType="String">
+		select id
+		  from t_id_seed
+	 	 where num = #{id}
+	</select>
+	
+	<!-- 영화 및 배우 데이터 저장. -->
+	<insert id="saveCredits">
+		INSERT INTO t_party (id, descrim, name, gender, department, image)
+		VALUES
+		<foreach collection="listCredits" index="index" item="credits" separator=",">
+			(
+			#{credits.stringId},
+			'casts',
+			#{credits.name},
+			#{credits.gender},
+			#{credits.department},
+			#{credits.profilePath}
+			 )
+		</foreach>
+	</insert>
+	
+	<!-- 영화 제작사 로고 등 데이터 저장. -->
+	<insert id="saveCompany">
+		INSERT INTO t_party (id, name, descrim, image, department)
+		VALUES
+		<foreach collection="listCompany" index="index" item="company" separator=",">
+			(
+			#{company.stringId},
+			#{company.name},
+			'producer',
+			#{company.logoPath},
+			#{company.country}
+			 )
+		</foreach>
+	</insert>
+	
+	<select id="findExistings" resultType="String">
+	 	 SELECT id
+	 	   FROM t_party
+	 	  WHERE id IN 
+      <foreach collection="listIdString" index="index" item="id" open="(" separator="," close=")">
+        #{id}
+      </foreach>
+	 	    and descrim = #{descrim};
+	</select>
+<!-- 여기까지 Party에 포함되는 영화 제작자 및 제작사 정보. -->
+
+	<!-- 	public int createOrganization(OrganizationVO organization); -->
+	<insert id="createOrganization">
+		<selectKey keyProperty="id" resultType="String"
+			order="BEFORE">
+			select NEXT_PK('s_party')
+		</selectKey>
+		INSERT INTO T_party(id, descrim, name, nick)
+		VALUES (#{id}, 'organization', #{name}, #{nick});
+	</insert>
+
+	<!-- 	public int createPerson(PersonVO person); OGNL 사용함 -->
+	<insert id="createPerson">
+		<selectKey keyProperty="id" resultType="String"
+			order="BEFORE">
+			select NEXT_PK('s_party')
+		</selectKey>
+
+		INSERT INTO T_party(id, descrim, name, gender, nick, pwd, birth)
+		VALUES (#{id}, 'user', #{name}, #{gender}, #{nick}, #{pwd}, #{birth});
+
+	  <if test="!(listContactPoint.isEmpty())">
+			INSERT INTO T_contact_Point(owner_id, cp_type, cp_val)
+			VALUES
+			<foreach item="cp" collection="listContactPoint" separator=","
+				close=";">
+				(#{id}, #{cp.cpType}, #{cp.cpVal})
+			</foreach>
+	  </if>
+	</insert>
+	
+	<!-- 	public int createAccountability(AccountabilityVO accountability); -->
+	<insert id="createAccountability">
+		<selectKey keyProperty="id" resultType="String"
+			order="BEFORE">
+			select NEXT_PK('s_accountability')
+		</selectKey>
+		INSERT INTO T_Accountability(id, account_type, owner_id, response_id)
+		VALUES (#{id}, #{accountType}, #{ownerId}, #{responseId});
+	</insert>
+
+	<!-- public int updateMembership(User4PartyVO user); -->
+	<update id="updateMembership">
+		update T_party
+		   set membership = #{membership}
+		 where id = #{id}
+		   and descrim = 'user';
+	</update>
+
+	<!-- public int updatePenalty(User4PartyVO user); -->
+	<update id="updatePenalty">
+		update T_party
+		   set penalty = #{penalty}
+		 where id = #{id}
+		   and descrim = 'user';
+	</update>
+
+	<!-- public int givePenalty(String id); -->
+	<update id="givePenalty">
+		update T_party
+		   set penalty = penalty + 1
+		 where id = #{id}
+		   and descrim = 'user';
+	</update>
+
+<!--     .............................  여기서부터    .................................      -->
+	<!-- public int checkReport(int movieId, String writerId); -->
+	<update id="checkReport">
+		update T_report
+		   set checked = true
+		 where movie_id = #{movieId}
+		   and writer_id = #{writerId};
+	</update>
+
+	<!-- public int updateRecentMovie(RecentMovieVO watching); -->
+	<update id="updateRecentMovie">
+		update T_recent_movie
+		   set view_time = (select least(view_time + #{viewTime}, movie_runtime))
+		 WHERE movie_id = #{movieId}
+		   and user_id = #{userId};
+	</update>
+<!--   ............................     여기까지 미완성     .............................      -->
+
+	<!-- public int inactiveAccount(String id); -->
+	<update id="inactiveAccount">
+		update T_party
+		   set active = false,
+		   	   membership = '1900-01-01',
+		  	   name = '탈퇴한 유저',
+		  	   nick = CONCAT('unuseableAccountOf', #{id}, 'IsNowInactivated')
+		 where id = #{id}
+		   and descrim = 'user';
+	</update>
+
+	<!-- public int deleteAccount(String id); -->
+	<delete id="deleteAccount">
+		delete from T_party
+		 where id = #{id}
+		   and descrim = 'user';
+	</delete>
+</mapper>

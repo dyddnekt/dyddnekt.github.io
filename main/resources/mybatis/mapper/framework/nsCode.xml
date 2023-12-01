@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="www.dream.bbs.framework.mapper.CodeMapper">
+	<resultMap id="rmCodeVO" type="www.dream.bbs.framework.model.CodeVO">
+		<result property="codeType" column="code_type"/>
+		<result property="codeVal" column="code_val"/>
+		<result property="validationRe" column="validation_re"/>
+	</resultMap>
+
+	<!-- public List<CodeVO> listAll(); -->
+	<select id="listAll" resultMap="rmCodeVO">
+		select code_type, code_val, validation_re
+		from T_CODE
+		where code_type = "contact point type"
+	</select>
+</mapper>
