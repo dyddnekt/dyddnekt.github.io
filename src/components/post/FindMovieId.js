@@ -1,0 +1,20 @@
+import { Fetch } from "toolbox/Fetch";
+
+export default function FindMovieId({ searchKeyword }) {
+    const movieUri = `http://localhost:8080/movie/search/${searchKeyword}`;
+
+    return <Fetch uri={movieUri} renderSuccess={RenderSuccess} />
+
+    function RenderSuccess(movielist) {
+        return movielist.map(movie => (
+            <div>
+                <h4>영화제목: {movie.title}</h4>
+                <p>영화줄거리: {movie.overview}</p>
+                <p>영화개봉일: {movie.releaseDate}</p>
+                <p>영화인기도: {movie.popularity}</p>
+                <p>영화투표평균점수: {movie.voteAverage}</p>
+                <p>영화투표횟수: {movie.voteCount}</p>
+            </div>
+        ))
+    }
+}
