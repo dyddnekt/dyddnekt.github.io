@@ -89,7 +89,74 @@
 		</foreach>
 	</insert>
 
-
+	<!-- List<TmdbMovieResultVO> findAllMovies(String sortList, PagingDTO paging); -->
+	<select id="findAllMovies" resultMap="rmMovieVO">
+		select backdrop_path, genre_names, id, runtime, overview, popularity, poster_path, title, vote_average, vote_count
+		  from T_tmdb_movie
+		 order by <choose>
+		 			<when test = "sortList != 'title'">
+		 				${sortList} desc
+		 			</when>
+		 			<otherwise>
+		 				${sortList}
+		 			</otherwise>
+		 		</choose>
+	</select>
+	<!-- public List<TmdbMovieResultVO> findGenreMovies(String[] listGenre, String sortList, PagingDTO paging); -->
+	<select id="findGenreMovies" resultMap="rmMovieVO">
+		select backdrop_path, genre_names, id, runtime, overview, popularity, poster_path, title, vote_average, vote_count
+		  from T_tmdb_movie
+		  where 
+			<foreach item="genre" collection="listGenre" separator=" and ">
+      			genre_names like '%${genre}%'
+      		</foreach>
+		 order by <choose>
+		 			<when test = "sortList != 'title'">
+		 				${sortList} desc
+		 			</when>
+		 			<otherwise>
+		 				${sortList}
+		 			</otherwise>
+		 		</choose>
+	</select>
+	<!-- public List<TmdbMovieResultVO> findNamedMovies(String[] listText, String sortList, PagingDTO paging); -->
+	<select id="findNamedMovies" resultMap="rmMovieVO">
+		select backdrop_path, genre_names, id, runtime, overview, popularity, poster_path, title, vote_average, vote_count
+		  from T_tmdb_movie
+		  where 
+			<foreach item="text" collection="listText" separator=" and ">
+      			title like '%${text}%'
+      		</foreach>
+		 order by <choose>
+		 			<when test = "sortList != 'title'">
+		 				${sortList} desc
+		 			</when>
+		 			<otherwise>
+		 				${sortList}
+		 			</otherwise>
+		 		</choose>
+	</select>
+	<!-- public List<TmdbMovieResultVO> findSearchMovies(String[] listGenre, String[] listText, String sortList, PagingDTO paging); -->
+	<select id="findSearchMovies" resultMap="rmMovieVO">
+		select backdrop_path, genre_names, id, runtime, overview, popularity, poster_path, title, vote_average, vote_count
+		  from T_tmdb_movie
+		  where 
+			<foreach item="genre" collection="listGenre" separator=" and ">
+      			genre_names like '%${genre}%'
+      		</foreach>
+      		and
+			<foreach item="text" collection="listText" separator=" and ">
+      			title like '%${text}%'
+      		</foreach>
+		 order by <choose>
+		 			<when test = "sortList != 'title'">
+		 				${sortList} desc
+		 			</when>
+		 			<otherwise>
+		 				${sortList}
+		 			</otherwise>
+		 		</choose>
+	</select>
 
 	<!-- public Tmdb_MovieVO findById(String id); 영화상세정보 검색하는기능. -->
 	<select id="findById" resultMap="rmMDetailVO">
