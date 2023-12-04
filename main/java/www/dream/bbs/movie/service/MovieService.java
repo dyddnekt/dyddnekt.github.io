@@ -1,5 +1,6 @@
 package www.dream.bbs.movie.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -7,6 +8,9 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import www.dream.bbs.board.mapper.PostMapper;
+import www.dream.bbs.framework.model.DreamPair;
+import www.dream.bbs.framework.model.PagingDTO;
 import www.dream.bbs.movie.mapper.MovieMapper;
 import www.dream.bbs.movie.model.TmdbMovieResultVO;
 
@@ -14,10 +18,38 @@ import www.dream.bbs.movie.model.TmdbMovieResultVO;
 public class MovieService {
 
 	@Autowired
+	private PostMapper postMapper;
+
+	@Autowired
 	private MovieMapper movieMapper;
 
 	public String changeId(int id) {
 		return movieMapper.changeId(id);
+	}
+
+	public DreamPair<List<TmdbMovieResultVO>, PagingDTO> searchMovies(String genreList, String text, String sortList, int page) {
+		String[] listGenre = genreList.substring(1, genreList.length() -1).split(",");
+		PagingDTO paging = new PagingDTO(page);
+		List<TmdbMovieResultVO> listResult = new ArrayList<>();
+
+		if (text.equals("아무것도입력되지않았습니다")) {
+			if (listGenre[0].equals("0")) {
+				listResult = movieMapper.findAllMovies(sortList, paging);
+			} else {
+				listResult = movieMapper.findGenreMovies(listGenre, sortList, paging);
+			}
+		} else {
+			String[] listText = text.split(" ");
+			if (listGenre[0].equals("0")) {
+				listResult = movieMapper.findNamedMovies(listText, sortList, paging);
+			} else {
+				listResult = movieMapper.findSearchMovies(listGenre, listText, sortList, paging);
+			}
+		}
+
+		long dataCount = postMapper.getFoundRows();
+		paging.buildPagination(dataCount);
+		return new DreamPair(listResult, paging);
 	}
 
 	// 인기 영화리스트 중복 안돼게 받는거. // 장르도 중복되면 안돼므로 여기서 같이 중복검사.
