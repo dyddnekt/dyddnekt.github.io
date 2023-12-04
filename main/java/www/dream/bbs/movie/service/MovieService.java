@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import www.dream.bbs.board.mapper.PostMapper;
 import www.dream.bbs.framework.model.DreamPair;
 import www.dream.bbs.framework.model.PagingDTO;
 import www.dream.bbs.movie.mapper.MovieMapper;
@@ -16,10 +15,6 @@ import www.dream.bbs.movie.model.TmdbMovieResultVO;
 
 @Service
 public class MovieService {
-
-	@Autowired
-	private PostMapper postMapper;
-
 	@Autowired
 	private MovieMapper movieMapper;
 
@@ -46,8 +41,7 @@ public class MovieService {
 				listResult = movieMapper.findSearchMovies(listGenre, listText, sortList, paging);
 			}
 		}
-
-		long dataCount = postMapper.getFoundRows();
+		long dataCount = movieMapper.getFoundRows();
 		paging.buildPagination(dataCount);
 		return new DreamPair(listResult, paging);
 	}
