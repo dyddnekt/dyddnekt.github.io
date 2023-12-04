@@ -10,6 +10,7 @@ import www.dream.bbs.movie.model.TmdbMovieResultVO;
 
 @Mapper // Container에 담기도록 지정
 public interface MovieMapper {
+	public long getFoundRows();
 
 	public String changeId(int id);
 
