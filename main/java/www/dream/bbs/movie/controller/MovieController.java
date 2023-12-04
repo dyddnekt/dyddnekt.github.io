@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import www.dream.bbs.framework.model.DreamPair;
+import www.dream.bbs.framework.model.PagingDTO;
 import www.dream.bbs.movie.model.TmdbGenreVO;
 import www.dream.bbs.movie.model.TmdbMovieResultVO;
 import www.dream.bbs.movie.service.GenreService;
@@ -24,10 +26,17 @@ public class MovieController {
 	@Autowired
 	private GenreService genreService;
 
-	// /movie/anonymous/listGenreInfo //Movie 장르 리스트를 호출하는 곳.
+	// /movie/anonymous/listGenreInfo //장르 리스트를 호출하는 곳.
 	@GetMapping("/anonymous/listGenreInfo")
 	public ResponseEntity<List<TmdbGenreVO>> listGenreInfo() {
 		return new ResponseEntity<>(genreService.listGenreInfo(), HttpStatus.OK);
+	}
+
+	// /movie/anonymous/searchMovies/{genreList}/{text}/{sortList}/{page} //Movie 검색결과를 호출하는 곳.
+	@GetMapping("/anonymous/searchMovies/{genreList}/{text}/{sortList}/{page}")
+	public ResponseEntity<DreamPair<List<TmdbMovieResultVO>, PagingDTO>> searchMovies(@PathVariable String genreList, 
+			@PathVariable String text, @PathVariable String sortList, @PathVariable int page) {
+		return new ResponseEntity<>(movieService.searchMovies(genreList, text, sortList, page), HttpStatus.OK);
 	}
 
 	// /movie/anonymous/listGenreMovie/28 //Movie 장르 리스트를 호출하는 곳.
