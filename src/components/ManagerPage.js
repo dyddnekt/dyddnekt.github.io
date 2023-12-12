@@ -16,7 +16,6 @@ export default function ManagerPage() {
                         <th>&nbsp;&nbsp;닉네임</th>
                         <th>&nbsp;&nbsp;생일</th>
                         <th>&nbsp;&nbsp;성별</th>
-                        <th>&nbsp;&nbsp;이메일</th>
                         <th>&nbsp;&nbsp;멤버십 만료일</th>
                         <th>&nbsp;&nbsp;벌점</th>
                     </tr>
@@ -72,8 +71,7 @@ function ListMember(memberList) {
                 <td>{member.name}</td>
                 <td>&nbsp;&nbsp;{member.nick}</td>
                 <td>&nbsp;&nbsp;{Birthday(member.birth)}</td>
-                <td>&nbsp;&nbsp;{member.sex ? '여성' : '남성'}</td>
-                <td>&nbsp;&nbsp;{member.email}</td>
+                <td>&nbsp;&nbsp;{member.gender == 1 ? '여성' : member.gender == 2 ? '남성' : member.gender == 3 ? '논바이너리' : '미등록'}</td>
                 <td>&nbsp;&nbsp;{MembershipDate(member.membership) < 0 ? '미구독 상태'
                     : MembershipDate(member.membership) === 0 ? '내일' : MembershipDate(member.membership) + 1 + '일 후'}</td>
                 <td>&nbsp;&nbsp;{member.penalty >= 5 ? '댓글 영구 금지' : member.penalty + '점'}</td>
