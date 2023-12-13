@@ -94,10 +94,11 @@
 
 	<!-- public List<User4PartyVO> listAllMember(); -->
 	<select id="listAllMember" resultMap="rmUser4PartyVO">
-		select *
-		  from T_party
-		 where descrim = 'user'
-		   and active = True;
+		select mem.*, cp.cp_type cp_cp_type, cp.cp_val cp_cp_val
+		  from T_party mem LEFT OUTER JOIN T_contact_Point cp
+		    on mem.id = cp.owner_id
+		 where mem.descrim = 'user'
+		   and mem.active = True;
 	</select>
 
 <!--     .............................  여기서부터    .................................      -->
