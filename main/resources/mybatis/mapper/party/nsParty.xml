@@ -96,7 +96,8 @@
 	<select id="listAllMember" resultMap="rmUser4PartyVO">
 		select *
 		  from T_party
-		 where descrim = 'user';
+		 where descrim = 'user'
+		   and active = True;
 	</select>
 
 <!--     .............................  여기서부터    .................................      -->
