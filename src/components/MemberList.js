@@ -29,7 +29,7 @@ function RenderSuccess(memberList) {
             <tr key={member.id}>
                 <td>{member.nick}</td>
                 <td>{member.name}</td>
-                <td>{member.sex ? '여성' : '남성'}</td>
+                <td>{member.gender == 1 ? '여성' : member.gender == 2 ? '남성' : member.gender == 3 ? '논바이너리' : '미등록'}</td>
             </tr>
             {member.listContactPoint.map(cp => (
                 <tr key={member.id + cp.cpType}>
