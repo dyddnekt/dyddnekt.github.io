@@ -1,0 +1,75 @@
+{
+	"adult": false,
+	"backdrop_path": "/wl4NWiZwpzZH67HiDgpDImLyds9.jpg",
+	"belongs_to_collection": {
+		"id": 126125,
+		"name": "익스펜더블 시리즈",
+		"poster_path": "/zwnCtNpHa6TFI1z20LPFgdY2Qks.jpg",
+		"backdrop_path": "/lA7oDSt6LkyDqtbFGbyuG0afmTI.jpg"
+	},
+	"budget": 100000000,
+	"genres": [
+		{
+			"id": 28,
+			"name": "액션"
+		},
+		{
+			"id": 12,
+			"name": "모험"
+		},
+		{
+			"id": 53,
+			"name": "스릴러"
+		}
+	],
+	"homepage": "",
+	"id": 299054,
+	"imdb_id": "tt3291150",
+	"original_language": "en",
+	"original_title": "Expend4bles",
+	"overview": "테러 단체에게 핵미사일이 탈취되어 3차 세계대전이 발발할 위기의 상황에 ‘리’(제이슨 스타뎀)를 새로운 리더로 맞은 무적의 팀 익스펜더블이 작전에 투입되는데...",
+	"popularity": 1207.257,
+	"poster_path": "/dWR8OTRCcYDbBmd8GKsyJT73kU2.jpg",
+	"production_companies": [
+		{
+			"id": 1020,
+			"logo_path": "/kuUIHNwMec4dwOLghDhhZJzHZTd.png",
+			"name": "Millennium Media",
+			"origin_country": "US"
+		},
+		{
+			"id": 48738,
+			"logo_path": null,
+			"name": "Campbell Grobman Films",
+			"origin_country": "US"
+		},
+		{
+			"id": 1632,
+			"logo_path": "/cisLn1YAUuptXVBa0xjq7ST9cH0.png",
+			"name": "Lionsgate",
+			"origin_country": "US"
+		}
+	],
+	"production_countries": [
+		{
+			"iso_3166_1": "US",
+			"name": "United States of America"
+		}
+	],
+	"release_date": "2023-09-15",
+	"revenue": 58000000,
+	"runtime": 103,
+	"spoken_languages": [
+		{
+			"english_name": "English",
+			"iso_639_1": "en",
+			"name": "English"
+		}
+	],
+	"status": "Released",
+	"tagline": "화끈하게 쓸어버린다!",
+	"title": "익스펜더블 4",
+	"video": false,
+	"vote_average": 6.5,
+	"vote_count": 707
+}

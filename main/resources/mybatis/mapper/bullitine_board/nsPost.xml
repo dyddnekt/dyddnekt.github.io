@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="www.dream.bbs.board.mapper.PostMapper">
+	<!-- resultMap - 데이터베이스 결과데이터를 객체에 로드하는 방법을 정의하는 엘리먼트 -->
+	<resultMap id="rmReplyVO" extends="nsEntity.rmMasterEntity"
+		type="www.dream.bbs.board.model.ReplyVO">
+		<result property="content" column="content" />
+		<result property="starScore" column="star_score" />
+		<!-- association – 복잡한 타입의 연관관계. 많은 결과는 타입으로 나타난다 -->
+		<!-- columnPrefix - 여러개의 테이블을 조인할때 ResultSet에서 칼럼명의 중복을 피하기 위해 칼럼별칭을 사용할 수 있다. 칼럼을 외부 결과매핑에 매핑하기 위해 columnPrefix를 명시하자. -->
+		<!-- notNullColumn - 기본적으로 자식객체는 칼럼중 적어도 하나를 null이 아닌 자식객체의 프로퍼티에 매핑할때 만들어진다. 이 속성을 사용해서 칼럼이 값을 가져야만 하는 것을 명시해서 행위를 변경할 수 있다. 디폴트값은 unset이다. -->
+		<!-- 회원 탈퇴 시 null 처리 -->
+		<association property="writer" columnPrefix="w_" notNullColumn="id"
+			resultMap="www.dream.bbs.party.mapper.PartyMapper.rmUser4PartyVO" />
+		<!-- discriminator – 사용할 resultMap 을 판단하기 위한 결과값을 사용 -->
+		<discriminator javaType="String" column="descrim">
+			<case value="post" resultMap="rmPostVO" />
+		</discriminator>
+	</resultMap>
+
+	<!-- extends - 확장하기(=상속) -->
+	<resultMap id="rmPostVO" extends="rmReplyVO"
+		type="www.dream.bbs.board.model.PostVO">
+		<result property="title" column="title" />
+		<result property="genre" column="genre" />
+		<result property="ageLimit" column="age_limit" />
+		<result property="readCnt" column="read_cnt" />
+		<association property="boardVO" columnPrefix="bb_"
+			resultMap="www.dream.bbs.board.mapper.BoardMapper.rmBoardVO" />
+		<association property="movieVO" columnPrefix="movie_"
+			resultMap="www.dream.bbs.movie.mapper.MovieMapper.rmMovieVO" />
+	</resultMap>
+
+	<!-- public long getFoundRows(); -->
+	<select id="getFoundRows" resultType="long">
+		SELECT FOUND_ROWS();
+	</select>
+	<!-- public List<PostVO> listAllPost(@Param("boardId") String boardId, @Param("paging") PagingDTO paging); -->
+	<select id="listAllPost" resultMap="rmPostVO">
+		select SQL_CALC_FOUND_ROWS
+			   p.*, w.id w_id, w.descrim w_descrim, w.name w_name, w.nick w_nick, w.birth w_birth, w.gender w_gender
+		  from T_reply p LEFT OUTER JOIN T_party w
+		  	   ON p.writer_id = w.id
+		 where p.bb_id = #{boardId}
+		   and w.descrim = 'user'
+		 order by p.id desc
+		 limit #{paging.limit} offset #{paging.offset};
+	</select>
+	<!-- public List<PostVO> searchByTfIdf(@Param("boardId") String boardId, 
+		@Param("arrSearch") String[] arrSearch, @Param("paging") PagingDTO paging); -->
+	<select id="searchByTfIdf" resultMap="rmPostVO">
+		select SQL_CALC_FOUND_ROWS
+			   p.*, w.id w_id, w.descrim w_descrim, w.name w_name, w.nick w_nick, w.birth w_birth, w.gender w_gender
+		  from (
+			  select p.id pid, sum(r.tf) * log(b.post_cnt / (count(p.id) + 1)) importance
+			  from T_tag t, t_tgt_tag r, T_reply p, t_bulitine_board b
+			 WHERE t.word IN 
+			<foreach item="word" collection="arrSearch" open="("
+				separator=", " close=")">
+				#{word}
+			</foreach>
+			   AND t.id = r.tag_id
+			   AND r.tgt_name = 'T_reply'
+			   AND r.tgt_id = p.id
+			   AND p.bb_id = b.id
+			   AND p.bb_id = #{boardId}
+			 group by p.id
+			 ) pst, T_reply p LEFT OUTER JOIN T_party w
+		  	   ON p.writer_id = w.id
+		 where pst.pid = p.id
+		   and w.descrim = 'user'
+		 order by pst.importance desc
+		 limit #{paging.limit} offset #{paging.offset};
+	</select>
+
+	<!-- public List<ReplyVO> findById(String id); -->
+	<select id="findById" resultMap="rmPostVO">
+		select r.*, w.id w_id, w.descrim w_descrim, w.name w_name, w.nick w_nick, w.birth w_birth, w.gender w_gender
+		  from T_reply r LEFT OUTER JOIN T_party w
+			   ON r.writer_id = w.id
+		 where r.id like CONCAT(#{id}, '%') <!-- {id}로 시작하는 값 -->
+		   and w.descrim = 'user';
+	</select>
+	<!-- public void incReadCnt(String id); -->
+	<update id="incReadCnt">
+		update T_reply
+		   set upt_dt = upt_dt,
+		   	   read_cnt = read_cnt + 1
+		 where id = #{id}
+	</update>
+
+	<!-- public boolean findReplyId(String id); --> 
+	<select id="findReplyId" resultType="boolean">
+		SELECT count(1) = 1
+		  FROM T_reply r
+		 WHERE r.id = #{id};
+	</select>
+
+	<!-- public List<PostVO> searchAllMovies(String[] genreList, String[] ageLimitList); -->
+	<select id="searchAllMovies" resultMap="rmPostVO">
+		select r.*, w.id w_id, w.descrim w_descrim, w.name w_name, w.nick w_nick, w.birth w_birth, w.gender w_gender
+		  from T_reply r LEFT OUTER JOIN T_party w
+		  	   ON r.writer_id = w.id
+		 WHERE <foreach item="genre" collection="genreList" open="("
+					separator=" or " close=")">
+					genre LIKE CONCAT('%', #{genre}, '%')
+				</foreach>
+		   and age_limit IN 
+		  		<foreach item="ageLimit" collection="ageLimitList" open="("
+					separator=", " close=")">
+					#{ageLimit}
+				</foreach>
+		   and w.descrim = 'user';
+	</select>
+	<!-- public List<PostVO> searchMovies(String genreList, String ageLimitList, String[] arrSearch); -->
+	<select id="searchMovies" resultMap="rmPostVO">
+		select r.*, w.id w_id, w.descrim w_descrim, w.name w_name, w.nick w_nick, w.birth w_birth, w.gender w_gender
+		  from T_reply r LEFT OUTER JOIN T_party w
+		  	   ON r.writer_id = w.id
+		 WHERE <foreach item="genre" collection="genreList" open="("
+					separator=" or " close=")">
+					genre LIKE CONCAT('%', #{genre}, '%')
+				</foreach>
+		   and age_limit IN 
+		  		<foreach item="ageLimit" collection="ageLimitList" open="("
+					separator=", " close=")">
+					#{ageLimit}
+				</foreach>
+		   and <foreach item="search" collection="arrSearch" open="("
+					separator=" and " close=")">
+					title LIKE CONCAT('%', #{search}, '%')
+				</foreach>
+		   and w.descrim = 'user';
+	</select>
+
+	<!-- public int createPost(PostVO post); -->
+	<insert id="createPost">
+		<selectKey keyProperty="id" resultType="String"
+			order="BEFORE">
+			select NEXT_PK('s_reply')
+		</selectKey>
+		INSERT INTO T_reply(id, descrim, writer_id, TITLE, content, bb_id, movie_id, 
+			genre, age_limit)
+		VALUES (#{id}, 'post', #{writer.id}, #{title},
+			#{content}, #{boardVO.id}, #{movieVO.id}, #{genre}, #{ageLimit});
+	</insert>
+	<!-- public int createReply(@Param("parent") ReplyVO parent, @Param("reply") ReplyVO reply); -->
+	<insert id="createReply">
+		INSERT INTO T_reply(id, descrim, writer_id, content, star_score)
+		VALUES (#{reply.id}, 'reply', #{reply.writerId}, #{reply.content}, #{reply.starScore});
+	</insert>
+
+	<!-- public int updatePost(PostVO post); -->
+	<update id="updatePost">
+		update T_reply
+		   set TITLE = #{title}, 
+		   	   content = #{content},
+			   genre = #{genre},
+			   age_limit = #{ageLimit}
+		 where id = #{id}
+	</update>
+	<!-- public int updateReply(ReplyVO reply); -->
+	<update id="updateReply">
+		update T_reply
+		   set content = #{content},
+			   star_Score = #{starScore}
+		 where id = #{id}
+	</update>
+
+	<!-- public int postUpdateStarScore(String id); -->
+	<update id="postUpdateStarScore">
+		update T_reply
+		   set star_score = (
+				select round(avg(star_score),2)
+				  from T_reply
+				 where id like CONCAT(#{id}, '%')
+				   and descrim = 'reply'
+				)
+		 where id = #{id}
+	</update>
+
+	<!-- public int deleteReply(String id); -->
+	<delete id="deleteReply">
+		delete from T_reply
+		 where id like CONCAT(#{id}, '%');
+	</delete>
+
+</mapper>
